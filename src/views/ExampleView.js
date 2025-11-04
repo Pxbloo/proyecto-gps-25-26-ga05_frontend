@@ -17,6 +17,18 @@ export default class ExampleView extends EventEmitter {
           <strong>Ejemplo MVC (lista simple)</strong>
         </div>
         <div class="card-body">
+          <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle"></i> 
+            <strong>Demo de routing:</strong><br>
+            <small>
+              <strong>Vista pública:</strong> 
+              <a href="#/artista/1" class="alert-link">Yung Beef</a> | 
+              <a href="#/artista/2" class="alert-link">Artista Demo</a><br>
+              <strong>Vista owner (con edición):</strong> 
+              <a href="#/artista/1/owner" class="alert-link">Yung Beef (owner)</a> | 
+              <a href="#/artista/2/owner" class="alert-link">Artista Demo (owner)</a>
+            </small>
+          </div>
           <form id="add-form" class="d-flex gap-2 mb-3" autocomplete="off">
             <input id="item-input" class="form-control" placeholder="Añadir elemento (p.ej. Merch)" />
             <button class="btn btn-primary" type="submit">

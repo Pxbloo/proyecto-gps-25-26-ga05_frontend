@@ -16,7 +16,7 @@ export async function obtenerArtistaPorId(id) {
 				spotify: "https://open.spotify.com/artist/12345",
 				twitter: "https://twitter.com/yungbeef",
 				facebook: "https://facebook.com/yungbeef",
-        tiktok:""
+				tiktok: "https://tiktok.com/@yungbeef"
 			},
 			populares: [
 				{ tipo: "cancion", titulo: "Canción más famosa", duracion: "3:12", portada: "/assets/img/song1.jpg" },

@@ -3,16 +3,39 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './style.css'
 
-// MVC demo minimal: Model-View-Controller wiring
+// Router y controladores
+import Router from './core/Router.js'
 import ExampleModel from './models/ExampleModel.js'
 import ExampleView from './views/ExampleView.js'
 import ExampleController from './controllers/ExampleController.js'
+import ArtistaController from './controllers/artistaController.js'
 
-// Punto de entrada: monta la app en #app
+// Configurar router
+const router = new Router()
 const root = document.getElementById('app')
+
 if (root) {
-	const model = new ExampleModel()
-	const view = new ExampleView(root)
-	// eslint-disable-next-line no-unused-vars
-	const controller = new ExampleController(model, view)
+	router.setRoot(root)
+
+	// Ruta: Home (ejemplo)
+	router.addRoute('/', () => {
+		const model = new ExampleModel()
+		const view = new ExampleView(root)
+		return new ExampleController(model, view)
+	})
+
+	// Ruta: Perfil de artista (visitante)
+	router.addRoute('/artista/:id', (params) => {
+		const artistId = parseInt(params.id, 10)
+		return new ArtistaController(root, artistId, false)
+	})
+	
+	// Ruta: Perfil de artista (owner - modo edición)
+	router.addRoute('/artista/:id/owner', (params) => {
+		const artistId = parseInt(params.id, 10)
+		return new ArtistaController(root, artistId, true)
+	})
+
+	// Iniciar router
+	router.init()
 }
