@@ -6,7 +6,51 @@ export default class UploadAlbumView extends EventEmitter {
     this.root = rootEl
     this.root.classList.add('upload-album-view')
     this.canciones = []
+	this.currentUser = this._getCurrentUser()
+
+	// Verificar si el usuario es artista
+    if (!this._isArtist()) {
+      this._renderNotAuthorized()
+      return
+    }
+	
     this._renderShell()
+  }
+
+  
+  _getCurrentUser() {
+    try {
+      return JSON.parse(localStorage.getItem('authUser') || 'null')
+    } catch {
+      return null
+    }
+  }
+
+  _isArtist() {
+    return this.currentUser && this.currentUser.tipo === 2
+  }
+
+  _renderNotAuthorized() {
+    this.root.innerHTML = `
+      <div class="container py-5">
+        <div class="row justify-content-center">
+          <div class="col-md-8 text-center">
+            <div class="card shadow-sm border-0">
+              <div class="card-body py-5">
+                <i class="bi bi-exclamation-triangle text-warning display-1 mb-4"></i>
+                <h2 class="text-dark mb-3">Acceso Restringido</h2>
+                <p class="text-muted mb-4">
+                  Solo los artistas pueden subir álbumes a la plataforma.
+                </p>
+                <a href="/" class="btn btn-primary" data-link>
+                  <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
   }
 
   _renderShell() {
@@ -17,7 +61,10 @@ export default class UploadAlbumView extends EventEmitter {
           <h1 class="display-4 fw-bold text-dark mb-3">
             <i class="bi bi-cloud-upload me-3"></i>Subir Álbum
           </h1>
-          <p class="lead text-muted">Agrega un nuevo álbum con todas sus canciones a la plataforma.</p>
+          <p class="lead text-muted">
+            Agrega un nuevo álbum con todas sus canciones a la plataforma.
+            <span class="badge bg-info ms-2">Artista: ${this.currentUser.nombre}</span>
+          </p>
         </header>
 
         <!-- Estados -->
@@ -59,13 +106,14 @@ export default class UploadAlbumView extends EventEmitter {
                       <div class="invalid-feedback">Por favor ingresa el nombre del álbum.</div>
                     </div>
 
-                    <!-- Artista -->
+                    <!-- Artista (oculto, se obtiene del usuario logueado) -->
                     <div class="mb-3">
-                      <label for="album-artista" class="form-label">Artista *</label>
-                      <select class="form-select" id="album-artista" required>
-                        <option value="">Seleccionar artista...</option>
-                      </select>
-                      <div class="invalid-feedback">Por favor selecciona un artista.</div>
+                      <label class="form-label">Artista</label>
+                      <div class="form-control bg-light">
+                        <i class="bi bi-person-check me-2 text-success"></i>
+                        ${this.currentUser.nombre} (Tú)
+                      </div>
+                      <small class="form-text text-muted">El álbum se asociará automáticamente a tu cuenta de artista.</small>
                     </div>
 
                     <!-- Género -->
@@ -176,10 +224,12 @@ export default class UploadAlbumView extends EventEmitter {
     this.$contadorCanciones = this.root.querySelector('#contador-canciones')
     this.$sinCancionesAlert = this.root.querySelector('#sin-canciones-alert')
     this.$imagenPreview = this.root.querySelector('#imagen-preview')
-    this.$imagenPreviewImg = this.$imagenPreview.querySelector('img')
+    this.$imagenPreviewImg = this.$imagenPreview?.querySelector('img')
 
-    // Event listeners
-    this._setupEventListeners()
+    // Event listeners (solo si es artista)
+    if (this._isArtist()) {
+      this._setupEventListeners()
+    }
   }
 
   _setupEventListeners() {
@@ -350,77 +400,74 @@ export default class UploadAlbumView extends EventEmitter {
     }, 2000)
   }
 
-async _submitForm() {
-  if (!this.$form.checkValidity()) {
-    this.$form.classList.add('was-validated')
-    
-    // Validación adicional para la imagen
-    const imagenFile = this.root.querySelector('#album-imagen').files[0]
-    if (!imagenFile) {
-      this.root.querySelector('#album-imagen').classList.add('is-invalid')
-    }
-    
-    return
-  }
-
-  // Validación de imagen
-  const imagenFile = this.root.querySelector('#album-imagen').files[0]
-  if (imagenFile) {
-    // Validar tamaño (1MB = 5 * 1024 * 1024 bytes)
-    const maxSize = 1 * 1024 * 1024; // 1MB en bytes
-    if (imagenFile.size > maxSize) {
-      this._mostrarErrorTemporal('La imagen es demasiado grande. Máximo 1MB permitido.')
-      this.root.querySelector('#album-imagen').classList.add('is-invalid')
+  async _submitForm() {
+    if (!this.$form.checkValidity()) {
+      this.$form.classList.add('was-validated')
+      
+      // Validación adicional para la imagen
+      const imagenFile = this.root.querySelector('#album-imagen').files[0]
+      if (!imagenFile) {
+        this.root.querySelector('#album-imagen').classList.add('is-invalid')
+      }
+      
       return
     }
 
-    // Validar formato
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/gif']
-    if (!allowedTypes.includes(imagenFile.type)) {
-      this._mostrarErrorTemporal('Formato de imagen no válido. Solo se permiten JPG o GIF.')
-      this.root.querySelector('#album-imagen').classList.add('is-invalid')
+    // Validación de imagen
+    const imagenFile = this.root.querySelector('#album-imagen').files[0]
+    if (imagenFile) {
+      // Validar tamaño (1MB = 1 * 1024 * 1024 bytes)
+      const maxSize = 1 * 1024 * 1024; // 1MB en bytes
+      if (imagenFile.size > maxSize) {
+        this._mostrarErrorTemporal('La imagen es demasiado grande. Máximo 1MB permitido.')
+        this.root.querySelector('#album-imagen').classList.add('is-invalid')
+        return
+      }
+
+      // Validar formato
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/gif']
+      if (!allowedTypes.includes(imagenFile.type)) {
+        this._mostrarErrorTemporal('Formato de imagen no válido. Solo se permiten JPG o GIF.')
+        this.root.querySelector('#album-imagen').classList.add('is-invalid')
+        return
+      }
+    }
+
+    if (this.canciones.length === 0) {
+      this._mostrarErrorTemporal('Debes agregar al menos una canción al álbum')
       return
     }
-  }
 
+    try {
+      // Obtener datos del formulario
+      const nombre = this.root.querySelector('#album-nombre').value.trim()
+      const generoValue = this.root.querySelector('#album-genero').value
+      const fecha = this.root.querySelector('#album-fecha').value
+      const imagenFile = this.root.querySelector('#album-imagen').files[0]
 
-  
+      const imagenBase64 = await this._fileToBase64(imagenFile)
 
-  if (this.canciones.length === 0) {
-    this._mostrarErrorTemporal('Debes agregar al menos una canción al álbum')
-    return
-  }
+      // El artista se obtiene del usuario logueado automáticamente
+      const albumData = {
+        nombre: nombre,
+        artista: this.currentUser.id, // ← Usamos el ID del usuario logueado
+        imagen: imagenBase64,
+        fecha: fecha || new Date().toISOString().split('T')[0]
+      }
 
-  try {
-    // Obtener datos del formulario
-    const nombre = this.root.querySelector('#album-nombre').value.trim()
-    const artista = parseInt(this.root.querySelector('#album-artista').value)
-    const generoValue = this.root.querySelector('#album-genero').value
-    const fecha = this.root.querySelector('#album-fecha').value
-    const imagenFile = this.root.querySelector('#album-imagen').files[0]
+      if (generoValue) {
+        albumData.genero = parseInt(generoValue)
+      }
 
-    const imagenBase64 = await this._fileToBase64(imagenFile)
+      this.emit('subirAlbum', {
+        album: albumData,
+        songs: this.canciones
+      })
 
-    const albumData = {
-      nombre: nombre,
-      artista: artista,
-      imagen: imagenBase64,
-      fecha: fecha || new Date().toISOString().split('T')[0]
+    } catch (error) {
+      this._mostrarErrorTemporal('Error al procesar la imagen: ' + error.message)
     }
-
-    if (generoValue) {
-      albumData.genero = parseInt(generoValue)
-    }
-
-  this.emit('subirAlbum', {
-	album: albumData,
-	songs: this.canciones
-  })
-
-  } catch (error) {
-    this._mostrarErrorTemporal('Error al procesar la imagen: ' + error.message)
   }
-}
 
   // Función auxiliar para convertir File a Base64
   _fileToBase64(file) {
@@ -491,23 +538,18 @@ async _submitForm() {
   }
 
   _showForm(state) {
-    this.$loading.classList.add('d-none')
-    this.$error.classList.add('d-none')
-    this.$success.classList.add('d-none')
-    this.$formContainer.classList.remove('d-none')
+	this.$loading.classList.add('d-none')
+	this.$error.classList.add('d-none')
+	this.$success.classList.add('d-none')
+	this.$formContainer.classList.remove('d-none')
 
-    // Llenar select de géneros
-    const $generoSelect = this.root.querySelector('#album-genero')
-    $generoSelect.innerHTML = '<option value="">Seleccionar género...</option>' +
-      (state.generos?.map(genero => 
-        `<option value="${genero.id}">${genero.nombre}</option>`
-      ).join('') || '')
-
-    // Llenar select de artistas
-    const $artistaSelect = this.root.querySelector('#album-artista')
-    $artistaSelect.innerHTML = '<option value="">Seleccionar artista...</option>' +
-      (state.artistas?.map(artista => 
-        `<option value="${artista.id}">${artista.nombre}</option>`
-      ).join('') || '')
+	// Llenar el select de géneros
+	const $generoSelect = this.root.querySelector('#album-genero')
+	if ($generoSelect) {
+      $generoSelect.innerHTML = '<option value="">Seleccionar género...</option>' +
+		(state.generos?.map(genero => 
+          `<option value="${genero.id}">${genero.nombre}</option>`
+		).join('') || '')
+	}
   }
 }

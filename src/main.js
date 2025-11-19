@@ -190,6 +190,21 @@ const mountUploadAlbum = () => {
   if (!root) return
   
   root.innerHTML = ''
+  
+  const currentUser = JSON.parse(localStorage.getItem('authUser') || 'null')
+  if (!currentUser || currentUser.tipo !== 2) {
+    root.innerHTML = `
+      <div class="container py-5">
+        <div class="alert alert-warning text-center">
+          <h4>Acceso restringido</h4>
+          <p>Debes ser un artista para acceder a esta sección.</p>
+          <a href="/" class="btn btn-primary" data-link>Volver al inicio</a>
+        </div>
+      </div>
+    `
+    return
+  }
+  
   const model = new UploadAlbumModel()
   const view = new UploadAlbumView(root)
   const controller = new UploadAlbumController(model, view)

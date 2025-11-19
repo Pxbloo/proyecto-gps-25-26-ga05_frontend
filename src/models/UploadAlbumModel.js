@@ -10,7 +10,6 @@ export default class UploadAlbumModel extends EventEmitter {
       success: false,
       successMessage: '',
       generos: [],
-      artistas: []
     }
   }
 
@@ -31,24 +30,6 @@ export default class UploadAlbumModel extends EventEmitter {
       this.state = { 
         ...this.state, 
         generos: [] 
-      }
-      this.emit('change', this.getState())
-    }
-  }
-
-  async cargarArtistas() {
-    try {
-      const artistas = await ApiClient.getUsuarios()
-      this.state = { 
-        ...this.state, 
-        artistas: artistas || []
-      }
-      this.emit('change', this.getState())
-    } catch (error) {
-      console.warn('No se pudieron cargar los artistas:', error.message)
-      this.state = { 
-        ...this.state, 
-        artistas: [] 
       }
       this.emit('change', this.getState())
     }

@@ -22,6 +22,5 @@ export default class UploadAlbumController extends EventEmitter {
 
     // Cargar datos iniciales
     this.model.cargarGeneros()
-    this.model.cargarArtistas()
   }
 }

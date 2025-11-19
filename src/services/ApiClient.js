@@ -112,14 +112,13 @@ export default {
   },
 
   async crearAlbum(albumData) {
-    return http(CONTENIDO_BASE, '/albums', {
+    return http(CONTENIDO_BASE, '/albums', withAuth({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(albumData)
-    })
+    }))
   },
 
-	
   async createCommunityPost(idComunidad, { comentario, postPadre = null, idUsuario }) {
     const payload = { comentario, idUsuario }
     if (postPadre !== null && postPadre !== undefined) payload.postPadre = postPadre
@@ -130,13 +129,12 @@ export default {
     }))
   },
 
-
   async crearCancion(cancionData) {
-    return http(CONTENIDO_BASE, '/canciones', {
+    return http(CONTENIDO_BASE, '/canciones', withAuth({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cancionData)
-    })
+    }))
   },
 	
   async deleteCommunityPost(idPost) {
@@ -163,17 +161,17 @@ export default {
 
   async getPostReplies(idPost) {
     return http(USUARIOS_BASE, `/posts/${idPost}/respuestas`, withAuth())
-  }
-  ,
+  },
 
   // Comunidad info (para conocer propietario/artista)
   async getCommunity(idComunidad) {
     return http(USUARIOS_BASE, `/comunidades/${idComunidad}`, withAuth())
-  }
-  ,
+  },
+  
   // Información pública del artista
   async getArtist(idArtista) {
     return http(USUARIOS_BASE, `/artistas/${idArtista}`, withAuth())
+  },
 	
   // Función auxiliar para convertir File a ArrayBuffer (bytes)
   async fileToArrayBuffer(file) {
@@ -183,5 +181,9 @@ export default {
       reader.onload = () => resolve(new Uint8Array(reader.result))
       reader.onerror = error => reject(error)
     })
+  },
+
+  async getUsuarios() {
+    return http(USUARIOS_BASE, '/usuarios', withAuth())
   }
 }
