@@ -90,61 +90,99 @@ export default {
     })
   },
 
-	async getNoticias() {
-		return http(CONTENIDO_BASE, '/noticias')
-	},
+  async getNoticias() {
+    return http(CONTENIDO_BASE, '/noticias')
+  },
 
-	async getNoticia(id) {
-		return http(CONTENIDO_BASE, '/noticias/' + id)
-	},
+  async getNoticia(id) {
+    return http(CONTENIDO_BASE, '/noticias/' + id)
+  },
 
-	async getUsuario(id) {
-		return http(USUARIOS_BASE, '/usuarios/' + id, withAuth())
-	},
+  async getUsuario(id) {
+    return http(USUARIOS_BASE, '/usuarios/' + id, withAuth())
+  },
+
+  async getGeneros() {
+    return http(CONTENIDO_BASE, '/generos')
+  },
 
 	async getUsuarios() {
 		return http(USUARIOS_BASE, '/usuarios')
 	},
 
-	async getArtistas() {
-		// Obtener usuarios de tipo artista (tipo=2) del microservicio de usuarios
-		return http(USUARIOS_BASE, '/usuarios?tipo=2')
-	},
+  async crearAlbum(albumData) {
+    return http(CONTENIDO_BASE, '/albums', withAuth({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(albumData)
+    }))
+  },
 
-	// Comunidad de artista
-	async getCommunityPosts(idComunidad) {
-		return http(USUARIOS_BASE, `/comunidades/${idComunidad}/posts`, withAuth())
-	},
+  async createCommunityPost(idComunidad, { comentario, postPadre = null, idUsuario }) {
+    const payload = { comentario, idUsuario }
+    if (postPadre !== null && postPadre !== undefined) payload.postPadre = postPadre
+    return http(USUARIOS_BASE, `/comunidades/${idComunidad}/posts`, withAuth({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }))
+  },
 
-	async createCommunityPost(idComunidad, { comentario, postPadre = null, idUsuario }) {
-		const payload = { comentario, idUsuario }
-		if (postPadre !== null && postPadre !== undefined) payload.postPadre = postPadre
-		return http(USUARIOS_BASE, `/comunidades/${idComunidad}/posts`, withAuth({
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(payload)
-		}))
-	},
-
-	async deleteCommunityPost(idPost) {
-		return http(USUARIOS_BASE, `/posts/${idPost}`, withAuth({ method: 'DELETE' }))
-	},
-
-	async getPost(idPost) {
-		return http(USUARIOS_BASE, `/posts/${idPost}`, withAuth())
-	},
-
-	async getPostReplies(idPost) {
-		return http(USUARIOS_BASE, `/posts/${idPost}/respuestas`, withAuth())
-	},
-
-	// Comunidad info (para conocer propietario/artista)
-	async getCommunity(idComunidad) {
-		return http(USUARIOS_BASE, `/comunidades/${idComunidad}`, withAuth())
-	},
+  async crearCancion(cancionData) {
+    return http(CONTENIDO_BASE, '/canciones', withAuth({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cancionData)
+    }))
+  },
 	
-	// Información pública del artista
-	async getArtist(idArtista) {
-		return http(USUARIOS_BASE, `/artistas/${idArtista}`, withAuth())
-	}
+  async deleteCommunityPost(idPost) {
+    return http(USUARIOS_BASE, `/posts/${idPost}`, withAuth({ method: 'DELETE' }))
+  },
+
+  // Función auxiliar para convertir File a Base64
+  async fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => {
+        // Remover el prefijo "data:image/...;base64," para obtener solo los datos base64
+        const base64 = reader.result.split(',')[1]
+        resolve(base64)
+      }
+      reader.onerror = error => reject(error)
+    })
+  },
+	
+  async getPost(idPost) {
+    return http(USUARIOS_BASE, `/posts/${idPost}`, withAuth())
+  },
+
+  async getPostReplies(idPost) {
+    return http(USUARIOS_BASE, `/posts/${idPost}/respuestas`, withAuth())
+  },
+
+  // Comunidad info (para conocer propietario/artista)
+  async getCommunity(idComunidad) {
+    return http(USUARIOS_BASE, `/comunidades/${idComunidad}`, withAuth())
+  },
+  
+  // Información pública del artista
+  async getArtist(idArtista) {
+    return http(USUARIOS_BASE, `/artistas/${idArtista}`, withAuth())
+  },
+	
+  // Función auxiliar para convertir File a ArrayBuffer (bytes)
+  async fileToArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsArrayBuffer(file)
+      reader.onload = () => resolve(new Uint8Array(reader.result))
+      reader.onerror = error => reject(error)
+    })
+  },
+
+  async getUsuarios() {
+    return http(USUARIOS_BASE, '/usuarios', withAuth())
+  }
 }

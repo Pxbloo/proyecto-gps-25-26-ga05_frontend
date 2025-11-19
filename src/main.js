@@ -20,13 +20,18 @@ import SearchModel from './models/SearchModel.js'
 import SearchView from './views/SearchView.js'
 import SearchController from './controllers/SearchController.js'
 
-//Noticias
+// Noticias
 import NoticiaView from './views/NoticiaView.js'
 import AllNewsView from './views/AllNewsView.js'
 import NoticiaModel from './models/NoticiaModel.js'
 import AllNewsModel from './models/AllNewsModel.js'
 import NoticiaController from './controllers/NoticiaController.js'
 import AllNewsController from './controllers/AllNewsController.js'
+
+// Subir álbumes
+import UploadAlbumModel from './models/UploadAlbumModel.js'
+import UploadAlbumView from './views/UploadAlbumView.js'
+import UploadAlbumController from './controllers/UploadAlbumController.js'
 
 // Comunidad de artista
 import CommunityModel from './models/CommunityModel.js'
@@ -38,10 +43,12 @@ import ApiClient from './services/ApiClient.js'
 class Router {
 	constructor() {
 		this.routes = {
-			'/': () => mountExample(),
-			'/login': () => mountLogin(),
-			'/register': () => mountRegister(),
-			'/noticias': () => mountAllNews()
+			'/': mountExample,
+			'/login': mountLogin,
+			'/register': mountRegister,
+			'/noticias': mountAllNews,
+			'/noticias/:id': mountNoticia,
+			'/upload-album': mountUploadAlbum
 		}
 		this.init()
 	}
@@ -192,6 +199,35 @@ const mountCommunity = async (idComunidad) => {
 			</div>
 		`
 	}
+}
+
+const mountUploadAlbum = () => {
+  const root = document.getElementById('app')
+  if (!root) return
+  
+  root.innerHTML = ''
+  
+  const currentUser = JSON.parse(localStorage.getItem('authUser') || 'null')
+  if (!currentUser || currentUser.tipo !== 2) {
+    root.innerHTML = `
+      <div class="container py-5">
+        <div class="alert alert-warning text-center">
+          <h4>Acceso restringido</h4>
+          <p>Debes ser un artista para acceder a esta sección.</p>
+          <a href="/" class="btn btn-primary" data-link>Volver al inicio</a>
+        </div>
+      </div>
+    `
+    return
+  }
+  
+  const model = new UploadAlbumModel()
+  const view = new UploadAlbumView(root)
+  const controller = new UploadAlbumController(model, view)
+
+  controller.on('cancelar', () => {
+    router.navigate('/')
+  })
 }
 
 // Inicializar router
