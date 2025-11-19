@@ -31,6 +31,7 @@ import AllNewsController from './controllers/AllNewsController.js'
 import CommunityModel from './models/CommunityModel.js'
 import CommunityView from './views/CommunityView.js'
 import CommunityController from './controllers/CommunityController.js'
+import ApiClient from './services/ApiClient.js'
 
 // Router simple
 class Router {
@@ -68,6 +69,8 @@ class Router {
 		const comunidadMatch = path.match(/^\/comunidades\/(\d+)$/)
 		if (noticiaMatch) {
 			mountNoticia(noticiaMatch[1])
+		} else if (comunidadMatch) {
+			mountCommunity(comunidadMatch[1])
 		} else if (path === '/noticias') {
 			mountAllNews()
 		} else {
@@ -152,15 +155,27 @@ const mountAllNews = () => {
   })
 }
 
-const mountCommunity = (idComunidad) => {
+const mountCommunity = async (idComunidad) => {
 	const root = document.getElementById('app')
 	if (!root) return
 
+	// Comprobar primero si el id corresponde a un artista; si no, NO montar la vista
 	root.innerHTML = ''
-	const model = new CommunityModel()
-	const view = new CommunityView(root)
-	// eslint-disable-next-line no-unused-vars
-	const controller = new CommunityController(model, view, idComunidad)
+	try {
+		const artist = await ApiClient.getArtist(Number(idComunidad))
+		// Es artista: montar la vista de comunidad
+		const model = new CommunityModel()
+		const view = new CommunityView(root)
+		if (artist?.nombre) view.setArtistName(String(artist.nombre))
+		// eslint-disable-next-line no-unused-vars
+		const controller = new CommunityController(model, view, idComunidad)
+	} catch (err) {
+		root.innerHTML = `
+			<div class="alert alert-warning" role="alert">
+				Esta comunidad no existe o no pertenece a un artista.
+			</div>
+		`
+	}
 }
 
 // Inicializar router
@@ -206,11 +221,7 @@ const renderAuthArea = () => {
 			<a id="btn-register" href="/register" class="btn btn-primary" data-link>Registrarse</a>
 		`
 	} else {
-		const avatarUrl = user.urlImagen && String(user.urlImagen).trim().length > 0 ? user.urlImagen : ''
-		const avatar = avatarUrl
-			? `<img src="${avatarUrl}" alt="avatar" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">`
-			: `<i class="bi bi-person-circle fs-4"></i>`
-
+		const avatar = `<i class="bi bi-person-circle fs-4"></i>`
 		container.innerHTML = `
 			<div class="dropdown">
 				<button class="btn btn-dark dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">

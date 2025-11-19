@@ -15,7 +15,7 @@ export default class CommunityView extends EventEmitter {
       <div class="container py-3">
         <div class="d-flex align-items-center gap-2 mb-3">
           <i class="bi bi-people"></i>
-          <h2 class="mb-0">Comunidad del artista</h2>
+          <h2 class="mb-0">Comunidad de <span id="community-artist-name">Artista</span></h2>
         </div>
 
         <div id="alerts"></div>
@@ -43,6 +43,7 @@ export default class CommunityView extends EventEmitter {
     this.$form = this.root.querySelector('#new-post-form')
     this.$textarea = this.root.querySelector('#comentario')
     this.$posts = this.root.querySelector('#posts')
+  this.$artistName = this.root.querySelector('#community-artist-name')
 
     this.$form.addEventListener('submit', (e) => {
       e.preventDefault()
@@ -123,17 +124,29 @@ export default class CommunityView extends EventEmitter {
       const id = p.id ?? p.Id
       const comentario = p.comentario ?? p.Comentario
       const idUsuario = p.idUsuario ?? p.IdUsuario
+      const nombreUsuario = p.nombreUsuario ?? p.NombreUsuario
       const canDelete = !!this.allowDelete
       return `
         <div class="card mb-2" style="margin-left:${depth * 16}px">
           <div class="card-body py-2">
             <div class="d-flex justify-content-between align-items-start">
               <div>
-                <div class="small text-muted">Usuario #${idUsuario}</div>
+                <div class="small text-muted">${nombreUsuario ? nombreUsuario : `Usuario #${idUsuario}`}</div>
                 <div>${comentario}</div>
               </div>
               ${canDelete ? `<button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${id}"><i class="bi bi-trash"></i></button>` : ''}
             </div>
+            <div class="mt-2">
+              <button class="btn btn-sm btn-outline-secondary" data-action="toggle-reply" data-id="${id}"><i class="bi bi-reply"></i> Responder</button>
+            </div>
+            <form class="row g-2 mt-2 d-none" data-reply-form="${id}">
+              <div class="col-12">
+                <textarea class="form-control" rows="2" placeholder="Escribe una respuesta..."></textarea>
+              </div>
+              <div class="col-12 d-flex justify-content-end">
+                <button class="btn btn-primary btn-sm" data-action="send-reply" data-id="${id}"><i class="bi bi-send"></i> Enviar</button>
+              </div>
+            </form>
           </div>
         </div>
         ${Array.isArray(p.replies) && p.replies.length ? p.replies.map(r => renderItem(r, depth + 1)).join('') : ''}
@@ -151,5 +164,35 @@ export default class CommunityView extends EventEmitter {
         this.emit('deletePost', { id })
       })
     })
+
+    // toggle reply forms
+    this.$posts.querySelectorAll('[data-action="toggle-reply"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault()
+        const id = btn.getAttribute('data-id')
+        const form = this.$posts.querySelector(`[data-reply-form="${id}"]`)
+        if (form) form.classList.toggle('d-none')
+      })
+    })
+
+    // send reply
+    this.$posts.querySelectorAll('[data-action="send-reply"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault()
+        const id = Number(btn.getAttribute('data-id'))
+        const form = this.$posts.querySelector(`[data-reply-form="${id}"]`)
+        if (!form) return
+        const textarea = form.querySelector('textarea')
+        const comentario = (textarea?.value || '').trim()
+        if (!comentario) return
+        this.emit('replyPost', { parentId: id, comentario })
+      })
+    })
+  }
+
+  setArtistName(name = '') {
+    if (this.$artistName) {
+      this.$artistName.textContent = name || 'Artista'
+    }
   }
 }

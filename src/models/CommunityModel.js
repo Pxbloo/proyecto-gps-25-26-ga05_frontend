@@ -16,4 +16,16 @@ export default class CommunityModel {
   async getPostReplies(idPost) {
     return ApiClient.getPostReplies(idPost)
   }
+
+  async getCommunityInfo(idComunidad) {
+    return ApiClient.getCommunity(idComunidad)
+  }
+
+  async getUsuario(idUsuario) {
+    return ApiClient.getUsuario(idUsuario)
+  }
+
+  async getArtistInfo(idArtista) {
+    return ApiClient.getArtist(idArtista)
+  }
 }

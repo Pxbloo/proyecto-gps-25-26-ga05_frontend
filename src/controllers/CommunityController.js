@@ -2,7 +2,10 @@ import EventEmitter from '../core/EventEmitter.js'
 
 function parseCurrentUser() {
   try {
-    const raw = localStorage.getItem('currentUser')
+    // Preferimos el nuevo esquema 'authUser', con retrocompatibilidad a 'currentUser'
+    const rawNew = localStorage.getItem('authUser')
+    const rawOld = localStorage.getItem('currentUser')
+    const raw = rawNew || rawOld
     if (!raw) return null
     const json = JSON.parse(raw)
     return json
@@ -37,23 +40,68 @@ export default class CommunityController extends EventEmitter {
     const ownerFlag = url.searchParams.get('owner') === '1'
 
     this.currentUser = parseCurrentUser()
-    this.isArtist = ownerFlag || deriveIsArtist(this.currentUser)
     this.userId = deriveUserId(this.currentUser)
 
-    // Pass capability into the view
+    // Pass capability into the view (initialize to false, compute after)
     this.view = view
-    this.view.allowDelete = this.isArtist
+    this.view.allowDelete = false
 
     this.view.on('createPost', ({ comentario }) => this.handleCreatePost(comentario))
+    this.view.on('replyPost', ({ parentId, comentario }) => this.handleReplyPost(parentId, comentario))
     this.view.on('deletePost', ({ id }) => this.handleDeletePost(id))
 
-    this.load()
+    this.initPermissions(ownerFlag).then((ok) => { if (ok) this.load() })
+  }
+
+  async initPermissions(ownerFlag) {
+    // Si viene marcado en la URL como propietario, permite borrar
+    if (ownerFlag) {
+      this.view.allowDelete = true
+      return true
+    }
+    // Intentar obtener info de la comunidad para verificar propietario
+    try {
+      const info = await this.model.getCommunityInfo(this.idComunidad).catch(() => null)
+      // 1) Nombre del artista: si el endpoint de comunidad no lo trae, usamos /artistas/:id
+      let ownerId = info?.idArtista ?? info?.artistaId ?? info?.ownerId ?? info?.idUsuario ?? null
+      let name = info?.nombreArtista || info?.nombre || (info?.artista && (info.artista.nombre || info.artista.name)) || ''
+
+      if (!name) {
+        // En muchos casos la comunidad coincide con el id del artista
+        const artistId = ownerId || this.idComunidad
+        const artist = await this.model.getArtistInfo(Number(artistId)).catch(() => null)
+        if (artist) {
+          name = artist.nombre || ''
+          // El endpoint de artistas garantiza tipo=2 (artista) y devuelve id
+          if (!ownerId) ownerId = artist.id
+        }
+      }
+      if (name) this.view.setArtistName(String(name))
+
+      // 2) Permisos: solo el artista propietario puede borrar
+      const canDelete = !!(this.userId && ownerId && Number(this.userId) === Number(ownerId))
+      this.view.allowDelete = canDelete
+      // Si no hay ownerId ni nombre y tampoco artista válido, bloquear acceso (solo artistas tienen comunidad)
+      if (!ownerId && !name) {
+        this.view.showErrors(['Esta comunidad no existe o no pertenece a un artista'])
+        setTimeout(() => { try { window.history.back() } catch { window.location.href = '/' } }, 1500)
+        return false
+      }
+      return true
+    } catch (_) {
+      // Si no se puede obtener, por seguridad mantener en false
+      this.view.allowDelete = false
+      this.view.showErrors(['Esta comunidad no existe o no pertenece a un artista'])
+      setTimeout(() => { try { window.history.back() } catch { window.location.href = '/' } }, 1500)
+      return false
+    }
   }
 
   async load() {
     try {
       const posts = await this.model.listPosts(this.idComunidad)
-      this.view.setPosts(posts)
+      const enriched = await this._enrichPostsWithUsernames(posts)
+      this.view.setPosts(enriched)
     } catch (err) {
       this.view.showErrors([err.message || 'No se pudieron cargar los posts'])
     }
@@ -71,15 +119,67 @@ export default class CommunityController extends EventEmitter {
         postPadre: null,
         idUsuario: this.userId,
       })
-      this.view.appendPost(created)
+      // Adjuntar nombre del usuario actual si no viene del backend
+      const withName = { ...created }
+      if (!withName.nombreUsuario && this.currentUser?.nombre) withName.nombreUsuario = this.currentUser.nombre
+      this.view.appendPost(withName)
       this.view.showSuccess('Publicado')
     } catch (err) {
       this.view.showErrors([err.message || 'No se pudo publicar'])
     }
   }
 
+  async handleReplyPost(parentId, comentario) {
+    this.view.clearAlerts()
+    if (!this.userId) {
+      this.view.showErrors(['Debes iniciar sesión para responder'])
+      return
+    }
+    try {
+      const created = await this.model.createPost(this.idComunidad, {
+        comentario,
+        postPadre: parentId,
+        idUsuario: this.userId,
+      })
+      const withName = { ...created }
+      if (!withName.nombreUsuario && this.currentUser?.nombre) withName.nombreUsuario = this.currentUser.nombre
+      this.view.appendPost(withName)
+      this.view.showSuccess('Respuesta publicada')
+    } catch (err) {
+      this.view.showErrors([err.message || 'No se pudo responder'])
+    }
+  }
+
+  async _enrichPostsWithUsernames(posts = []) {
+    try {
+      const ids = new Set()
+      posts.forEach(p => {
+        const uid = p.idUsuario ?? p.IdUsuario
+        if (uid != null) ids.add(Number(uid))
+      })
+      const idList = Array.from(ids).filter(Number.isFinite)
+      const results = await Promise.allSettled(idList.map(id => this.model.getUsuario(id)))
+      const nameMap = new Map()
+      results.forEach((r, idx) => {
+        const id = idList[idx]
+        if (r.status === 'fulfilled' && r.value) {
+          const u = r.value
+          const nombre = u.nombre ?? u.Nombre ?? u.username ?? u.name ?? ''
+          nameMap.set(id, String(nombre))
+        }
+      })
+      return posts.map(p => {
+        const uid = Number(p.idUsuario ?? p.IdUsuario)
+        const nombreUsuario = nameMap.get(uid)
+        return nombreUsuario ? { ...p, nombreUsuario } : p
+      })
+    } catch {
+      return posts
+    }
+  }
+
   async handleDeletePost(id) {
-    if (!this.isArtist) return
+    if (!this.view.allowDelete) return
     if (!confirm('¿Eliminar esta publicación?')) return
     try {
       await this.model.deletePost(id)
