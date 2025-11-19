@@ -2,6 +2,22 @@
 const CONTENIDO_BASE = 'http://localhost:8081'
 const USUARIOS_BASE = 'http://localhost:8082'
 
+function getAuthToken() {
+  try {
+    return localStorage.getItem('authToken') || ''
+  } catch {
+    return ''
+  }
+}
+
+function withAuth(opts = {}) {
+  const token = getAuthToken()
+  if (!token) return opts
+  const headers = new Headers(opts.headers || {})
+  if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
+  return { ...opts, headers }
+}
+
 async function http(base, url, opts = {}) {
   const res = await fetch(base + url, opts)
   const contentType = res.headers.get('content-type') || ''
@@ -83,7 +99,7 @@ export default {
 	},
 
 	async getUsuario(id) {
-    return http(USUARIOS_BASE, '/usuarios/' + id)
+		return http(USUARIOS_BASE, '/usuarios/' + id, withAuth())
 	},
 
 	async getUsuarios() {
@@ -93,5 +109,42 @@ export default {
 	async getArtistas() {
 		// Obtener usuarios de tipo artista (tipo=2) del microservicio de usuarios
 		return http(USUARIOS_BASE, '/usuarios?tipo=2')
+	},
+
+	// Comunidad de artista
+	async getCommunityPosts(idComunidad) {
+		return http(USUARIOS_BASE, `/comunidades/${idComunidad}/posts`, withAuth())
+	},
+
+	async createCommunityPost(idComunidad, { comentario, postPadre = null, idUsuario }) {
+		const payload = { comentario, idUsuario }
+		if (postPadre !== null && postPadre !== undefined) payload.postPadre = postPadre
+		return http(USUARIOS_BASE, `/comunidades/${idComunidad}/posts`, withAuth({
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		}))
+	},
+
+	async deleteCommunityPost(idPost) {
+		return http(USUARIOS_BASE, `/posts/${idPost}`, withAuth({ method: 'DELETE' }))
+	},
+
+	async getPost(idPost) {
+		return http(USUARIOS_BASE, `/posts/${idPost}`, withAuth())
+	},
+
+	async getPostReplies(idPost) {
+		return http(USUARIOS_BASE, `/posts/${idPost}/respuestas`, withAuth())
+	},
+
+	// Comunidad info (para conocer propietario/artista)
+	async getCommunity(idComunidad) {
+		return http(USUARIOS_BASE, `/comunidades/${idComunidad}`, withAuth())
+	},
+	
+	// Información pública del artista
+	async getArtist(idArtista) {
+		return http(USUARIOS_BASE, `/artistas/${idArtista}`, withAuth())
 	}
 }
