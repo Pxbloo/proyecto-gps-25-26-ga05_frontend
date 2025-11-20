@@ -106,6 +106,19 @@ export default class UploadAlbumView extends EventEmitter {
                       <div class="invalid-feedback">Por favor ingresa el nombre del álbum.</div>
                     </div>
 
+                    <!-- Precio del Álbum -->
+                    <div class="mb-3">
+                      <label for="album-precio" class="form-label">Precio del Álbum (€) *</label>
+                      <div class="input-group">
+                        <span class="input-group-text">€</span>
+                        <input type="number" class="form-control" id="album-precio" 
+                               min="0.50" max="99.99" step="0.01" 
+                               placeholder="9.99" required>
+                      </div>
+                      <div class="invalid-feedback">El precio debe estar entre 0.50€ y 99.99€</div>
+                      <small class="form-text text-muted">Precio de venta del álbum completo</small>
+                    </div>
+
                     <!-- Artista (oculto, se obtiene del usuario logueado) -->
                     <div class="mb-3">
                       <label class="form-label">Artista</label>
@@ -266,6 +279,20 @@ export default class UploadAlbumView extends EventEmitter {
     this.root.querySelector('#album-imagen').addEventListener('change', (e) => {
       this._mostrarVistaPreviaImagen(e.target.files[0])
     })
+
+    // Validación en tiempo real del precio
+    this.root.querySelector('#album-precio').addEventListener('input', (e) => {
+      this._validarPrecio(e.target)
+    })
+  }
+
+  _validarPrecio(input) {
+    const precio = parseFloat(input.value)
+    if (precio < 0.50 || precio > 99.99) {
+      input.classList.add('is-invalid')
+    } else {
+      input.classList.remove('is-invalid')
+    }
   }
 
   _mostrarVistaPreviaImagen(file) {
@@ -410,6 +437,13 @@ export default class UploadAlbumView extends EventEmitter {
         this.root.querySelector('#album-imagen').classList.add('is-invalid')
       }
       
+      // Validación adicional para el precio
+      const precioInput = this.root.querySelector('#album-precio')
+      const precio = parseFloat(precioInput.value)
+      if (precio < 0.50 || precio > 99.99 || isNaN(precio)) {
+        precioInput.classList.add('is-invalid')
+      }
+      
       return
     }
 
@@ -433,6 +467,15 @@ export default class UploadAlbumView extends EventEmitter {
       }
     }
 
+    // Validación de precio
+    const precioInput = this.root.querySelector('#album-precio')
+    const precio = parseFloat(precioInput.value)
+    if (precio < 0.50 || precio > 99.99 || isNaN(precio)) {
+      this._mostrarErrorTemporal('El precio debe estar entre 0.50€ y 99.99€')
+      precioInput.classList.add('is-invalid')
+      return
+    }
+
     if (this.canciones.length === 0) {
       this._mostrarErrorTemporal('Debes agregar al menos una canción al álbum')
       return
@@ -441,6 +484,7 @@ export default class UploadAlbumView extends EventEmitter {
     try {
       // Obtener datos del formulario
       const nombre = this.root.querySelector('#album-nombre').value.trim()
+      const precio = parseFloat(this.root.querySelector('#album-precio').value)
       const generoValue = this.root.querySelector('#album-genero').value
       const fecha = this.root.querySelector('#album-fecha').value
       const imagenFile = this.root.querySelector('#album-imagen').files[0]
@@ -450,6 +494,7 @@ export default class UploadAlbumView extends EventEmitter {
       // El artista se obtiene del usuario logueado automáticamente
       const albumData = {
         nombre: nombre,
+        precio: precio,
         artista: this.currentUser.id, // ← Usamos el ID del usuario logueado
         imagen: imagenBase64,
         fecha: fecha || new Date().toISOString().split('T')[0]

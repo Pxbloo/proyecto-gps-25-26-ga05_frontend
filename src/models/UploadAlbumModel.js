@@ -40,6 +40,11 @@ export default class UploadAlbumModel extends EventEmitter {
       this.state = { ...this.state, loading: true, error: null, success: false }
       this.emit('change', this.getState())
 
+      // Validar que el precio esté presente y sea válido
+      if (!albumData.precio || albumData.precio <= 0) {
+        throw new Error('El precio del álbum es requerido y debe ser mayor a 0')
+      }
+
       // 1. Subir el álbum usando el endpoint POST /albums
       const albumCreado = await ApiClient.crearAlbum(albumData)
 
