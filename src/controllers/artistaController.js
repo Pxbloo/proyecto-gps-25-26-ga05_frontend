@@ -4,11 +4,20 @@ import { obtenerUsuarioPorId, esArtista } from '../models/artistaModel.js'
 export default class ArtistaController {
   //simulamos ownership con el bool isOwner provisionalmente
   constructor(root, userId = 1, isOwner = true) {
-    this.view = new ArtistaView(root, isOwner)
+    // Determinar si el perfil que se ve es realmente el del usuario autenticado
+    this.currentUser = null
+    try {
+      this.currentUser = JSON.parse(localStorage.getItem('authUser') || 'null')
+    } catch {}
+
+    const isOwnerById = !!(this.currentUser && Number(this.currentUser.id) === Number(userId))
+    const effectiveIsOwner = !!(isOwner && isOwnerById)
+
+    this.view = new ArtistaView(root, effectiveIsOwner)
     this.usuario = null
     this.followed = false
     this.userId = userId
-    this.isOwner = isOwner
+    this.isOwner = effectiveIsOwner
     this.editMode = false
     this.visibilitySettings = null
 

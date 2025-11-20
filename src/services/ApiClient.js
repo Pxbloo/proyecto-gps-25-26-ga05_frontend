@@ -135,6 +135,15 @@ export default {
       body: JSON.stringify(cancionData)
     }))
   },
+
+  async crearNoticia(noticiaData) {
+    // noticiaData: { titulo, contenidoHTML, fecha: 'YYYY-MM-DD', autor }
+    return http(CONTENIDO_BASE, '/noticias', withAuth({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(noticiaData)
+    }))
+  },
 	
   async deleteCommunityPost(idPost) {
     return http(USUARIOS_BASE, `/posts/${idPost}`, withAuth({ method: 'DELETE' }))

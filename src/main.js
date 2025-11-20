@@ -33,6 +33,11 @@ import UploadAlbumModel from './models/UploadAlbumModel.js'
 import UploadAlbumView from './views/UploadAlbumView.js'
 import UploadAlbumController from './controllers/UploadAlbumController.js'
 
+// Crear noticias (admin)
+import UploadNoticiaModel from './models/UploadNoticiaModel.js'
+import UploadNoticiaView from './views/UploadNoticiaView.js'
+import UploadNoticiaController from './controllers/UploadNoticiaController.js'
+
 // Comunidad de artista
 import CommunityModel from './models/CommunityModel.js'
 import CommunityView from './views/CommunityView.js'
@@ -48,7 +53,8 @@ class Router {
 			'/register': mountRegister,
 			'/noticias': mountAllNews,
 			'/noticias/:id': mountNoticia,
-			'/upload-album': mountUploadAlbum
+			'/upload-album': mountUploadAlbum,
+			'/upload-noticia': mountUploadNoticia
 		}
 		this.init()
 	}
@@ -230,6 +236,35 @@ const mountUploadAlbum = () => {
   })
 }
 
+const mountUploadNoticia = () => {
+	const root = document.getElementById('app')
+	if (!root) return
+
+	root.innerHTML = ''
+
+	const currentUser = JSON.parse(localStorage.getItem('authUser') || 'null')
+	if (!currentUser || currentUser.tipo !== 1) {
+		root.innerHTML = `
+			<div class="container py-5">
+				<div class="alert alert-warning text-center">
+					<h4>Acceso restringido</h4>
+					<p>Debes ser administrador para crear noticias.</p>
+					<a href="/" class="btn btn-primary" data-link>Volver al inicio</a>
+				</div>
+			</div>
+		`
+		return
+	}
+
+	const model = new UploadNoticiaModel()
+	const view = new UploadNoticiaView(root)
+	const controller = new UploadNoticiaController(model, view)
+
+	controller.on('cancelar', () => {
+		router.navigate('/')
+	})
+}
+
 // Inicializar router
 const router = new Router()
 
@@ -313,7 +348,10 @@ const attachAuthAreaHandlers = () => {
 	})
 	btnProfile?.addEventListener('click', (e) => {
 		e.preventDefault()
-		// Pendiente: navegar a página de perfil cuando exista
+		const user = getAuthUser()
+		if (user && typeof user.id !== 'undefined') {
+			router.navigate(`/usuario/${user.id}/owner`)
+		}
 	})
 }
 
