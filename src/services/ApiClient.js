@@ -144,6 +144,10 @@ export default {
       body: JSON.stringify(noticiaData)
     }))
   },
+
+  async deleteNoticia(id) {
+    return http(CONTENIDO_BASE, `/noticias/${id}`, withAuth({ method: 'DELETE' }))
+  },
 	
   async deleteCommunityPost(idPost) {
     return http(USUARIOS_BASE, `/posts/${idPost}`, withAuth({ method: 'DELETE' }))
