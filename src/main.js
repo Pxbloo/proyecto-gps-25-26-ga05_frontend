@@ -348,7 +348,10 @@ const attachAuthAreaHandlers = () => {
 	})
 	btnProfile?.addEventListener('click', (e) => {
 		e.preventDefault()
-		// Pendiente: navegar a página de perfil cuando exista
+		const user = getAuthUser()
+		if (user && typeof user.id !== 'undefined') {
+			router.navigate(`/usuario/${user.id}/owner`)
+		}
 	})
 }
 

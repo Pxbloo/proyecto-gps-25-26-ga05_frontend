@@ -5,12 +5,23 @@ export default class ArtistaView extends EventEmitter {
     super()
     this.root = rootEl
     this.isOwner = isOwner
+    this.currentUser = this._getCurrentUser()
     this.root.classList.add('artist-view')
     this._renderShell()
   }
 
+  _getCurrentUser() {
+    try {
+      return JSON.parse(localStorage.getItem('authUser') || 'null')
+    } catch {
+      return null
+    }
+  }
+
   _renderShell() {
+    const isAdmin = !!(this.currentUser && this.currentUser.tipo === 1)
     const editButtonHtml = this.isOwner ? '<button id="editProfileBtn" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i> Editar perfil</button>' : ''
+    const adminNewsButtonHtml = (this.isOwner && isAdmin) ? '<a href="/upload-noticia" data-link class="btn btn-primary btn-sm"><i class="bi bi-newspaper"></i> Publicar noticia</a>' : ''
     
     this.root.innerHTML = `
       <div class="card shadow-sm mb-4">
@@ -30,6 +41,7 @@ export default class ArtistaView extends EventEmitter {
               <div class="d-flex gap-2 mb-2">
                 ${this.isOwner ? editButtonHtml : '<button id="followBtn" class="btn btn-success btn-sm">Seguir</button>'}
                 <button id="communityBtn" class="btn btn-outline-secondary btn-sm">Comunidad</button>
+                ${adminNewsButtonHtml}
               </div>
               <div id="artistSocials" class="d-flex gap-2 flex-wrap mb-3"></div>
               
