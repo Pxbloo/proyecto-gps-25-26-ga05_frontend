@@ -22,7 +22,6 @@ export default class MerchDetailModel extends EventEmitter {
 
       const m = await ApiClient.getMerch(id)
 
-      // procesar imagen similar a MerchModel
       let imagenUrl = ''
       try {
         if (m && m.imagen) {
@@ -54,17 +53,6 @@ export default class MerchDetailModel extends EventEmitter {
     } catch (err) {
       this.state = { ...this.state, error: err.message || String(err), loading: false }
       this.emit('change', this.getState())
-    }
-  }
-
-  async comprar(id, cantidad = 1) {
-    try {
-      await ApiClient.disminuirStockMerch(id, cantidad)
-      // actualizar localmente la cantidad (re-cargar mejor)
-      await this.load(id)
-      return true
-    } catch (err) {
-      throw err
     }
   }
 

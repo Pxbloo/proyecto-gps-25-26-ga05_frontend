@@ -226,6 +226,13 @@ export default {
 
   async getUsuarios() {
     return http(USUARIOS_BASE, '/usuarios', withAuth())
-  }
+  },
 
+  async comprarMerch(payload) {
+  return http(CONTENIDO_BASE, '/pedido/pago', withAuth({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }))
+}
 }

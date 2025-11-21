@@ -24,16 +24,33 @@ export default class MerchDetailView extends EventEmitter {
                 <img id="merch-image" src="" alt="merch" class="w-100 h-100 object-fit-cover">
               </div>
             </div>
+
             <div class="col-md-6">
               <h2 id="merch-name" class="fw-bold"></h2>
               <div class="mb-2"><strong id="merch-price" class="text-primary"></strong></div>
               <div class="mb-3"><small class="text-muted">Stock: <span id="merch-stock">-</span></small></div>
               <p id="merch-desc" class="text-muted"></p>
 
-              <div id="actions" class="mt-4">
-                <button id="btn-buy" class="btn btn-primary">Comprar</button>
-                <a href="/merch" data-link class="btn btn-outline-secondary ms-2">Volver</a>
+              <!-- 🟦 FORMULARIO DE COMPRA -->
+              <div class="card p-3 mt-4">
+                <h5 class="mb-3">Datos de pago</h5>
+
+                <label class="form-label">Cantidad</label>
+                <input id="input-cantidad" type="number" min="1" value="1" class="form-control mb-3">
+
+                <label class="form-label">Número de tarjeta</label>
+                <input id="input-numero" type="text" maxlength="16" class="form-control mb-3">
+
+                <label class="form-label">CVV</label>
+                <input id="input-cvv" type="text" maxlength="3" class="form-control mb-3">
+
+                <label class="form-label">Fecha expiración (MM/AA)</label>
+                <input id="input-exp" type="text" placeholder="12/26" class="form-control mb-3">
+
+                <button id="btn-pagar" class="btn btn-success w-100">Pagar</button>
               </div>
+
+              <a href="/merch" data-link class="btn btn-outline-secondary mt-3">Volver</a>
 
               <div id="message-area" class="mt-3"></div>
             </div>
@@ -50,10 +67,28 @@ export default class MerchDetailView extends EventEmitter {
     this.$price = this.root.querySelector('#merch-price')
     this.$stock = this.root.querySelector('#merch-stock')
     this.$desc = this.root.querySelector('#merch-desc')
-    this.$btnBuy = this.root.querySelector('#btn-buy')
     this.$message = this.root.querySelector('#message-area')
 
-    this.$btnBuy.addEventListener('click', () => this.emit('comprar'))
+    // Inputs
+    this.$cantidad = this.root.querySelector("#input-cantidad")
+    this.$numero = this.root.querySelector("#input-numero")
+    this.$cvv = this.root.querySelector("#input-cvv")
+    this.$exp = this.root.querySelector("#input-exp")
+
+    // Botón pagar
+    this.$btnPagar = this.root.querySelector("#btn-pagar")
+
+    // Evento pagar
+    this.$btnPagar.addEventListener("click", () => {
+      this.emit("pagar", {
+        cantidad: Number(this.$cantidad.value),
+        tarjeta: {
+          numero: this.$numero.value,
+          cvv: this.$cvv.value,
+          expiracion: this.$exp.value
+        }
+      })
+    })
   }
 
   render(state) {
@@ -80,21 +115,20 @@ export default class MerchDetailView extends EventEmitter {
     this.$error.classList.add('d-none')
     this.$content.classList.remove('d-none')
 
-    if (!merch) return
     this.$image.src = merch.imagenUrl || ''
     this.$image.alt = merch.nombre || 'Producto'
     this.$name.textContent = merch.nombre || ''
     this.$price.textContent = merch.precioFormateado || merch.precio || ''
-    this.$stock.textContent = typeof merch.stock !== 'undefined' ? merch.stock : '-'
+    this.$stock.textContent = merch.stock ?? '-'
     this.$desc.textContent = merch.descripcion || ''
 
-    // Desactivar comprar si no hay stock
+    // Si no hay stock → deshabilitar pago
     if (Number(merch.stock) <= 0) {
-      this.$btnBuy.setAttribute('disabled', 'disabled')
-      this.$btnBuy.textContent = 'Agotado'
+      this.$btnPagar.setAttribute('disabled', 'disabled')
+      this.$btnPagar.textContent = 'Agotado'
     } else {
-      this.$btnBuy.removeAttribute('disabled')
-      this.$btnBuy.textContent = 'Comprar'
+      this.$btnPagar.removeAttribute('disabled')
+      this.$btnPagar.textContent = 'Pagar'
     }
   }
 
