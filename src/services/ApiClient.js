@@ -212,6 +212,14 @@ export default {
 
   async getUsuarios() {
     return http(USUARIOS_BASE, '/usuarios', withAuth())
-  }
+  },
+
+  async searchUsers(q) {
+    if (!q || String(q).trim() === '') {
+      throw new Error("Parámetro 'q' es requerido para buscar usuarios")
+    }
+    const url = `/usuarios?q=${encodeURIComponent(String(q))}`
+    return http(USUARIOS_BASE, url, withAuth())
+  },
 
 }
