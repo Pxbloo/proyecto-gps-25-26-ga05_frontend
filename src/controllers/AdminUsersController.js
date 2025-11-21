@@ -1,5 +1,6 @@
 import AdminUsersModel from '../models/AdminUsersModel.js'
 import AdminUsersView from '../views/AdminUsersView.js'
+import ApiClient from '../services/ApiClient.js'
 
 // Controller para la vista de administración de usuarios
 // Maneja la interacción entre la vista y el modelo (búsqueda y navegación).
@@ -12,6 +13,7 @@ export default class AdminUsersController {
     // Suscribirse a eventos de la vista
     this.view.on('buscar', (q) => this.buscar(q))
     this.view.on('verUsuario', (id) => this.verUsuario(id))
+    this.view.on('borrarUsuario', (id) => this.borrarUsuario(id))
 
     // Render inicial
     this.render()
@@ -44,8 +46,36 @@ export default class AdminUsersController {
     if (window.router) {
       window.router.navigate(`/usuario/${id}`)
     } else {
-      // Fallback: cambiar la ubicación
+      // Alternativa: cambiar la ubicación
       window.location.href = `/usuario/${id}`
+    }
+  }
+
+  // Eliminar usuario (solo administradores). Pide confirmación y refresca resultados.
+  async borrarUsuario(id) {
+    if (!id) return
+    const confirmado = window.confirm('¿Seguro que deseas eliminar este usuario? Esta acción no se puede deshacer.')
+    if (!confirmado) return
+    // Actualización optimista: eliminar la fila inmediatamente de la vista
+    const prevUsuarios = Array.isArray(this.model.state.usuarios) ? [...this.model.state.usuarios] : []
+    this.model.state = { ...this.model.state, usuarios: prevUsuarios.filter(u => String(u.id) !== String(id)) }
+    this.render()
+
+    try {
+      // Llamada al API para borrar
+      await ApiClient.deleteUsuario(id)
+
+      // Tras éxito, re-ejecutar la búsqueda actual para sincronizar con el servidor
+      const q = this.model.state?.query || ''
+      if (q && q.trim() !== '') {
+        await this.model.buscar(q)
+      }
+      // Si no hay query, la tabla ya se ha actualizado optimistamente
+    } catch (err) {
+      // Restaurar estado anterior en caso de error
+      this.model.state = { ...this.model.state, usuarios: prevUsuarios }
+      this.render()
+      alert('Error al eliminar el usuario: ' + (err.message || err))
     }
   }
 

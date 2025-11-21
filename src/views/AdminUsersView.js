@@ -87,12 +87,16 @@ export default class AdminUsersView extends EventEmitter {
         <td>${u.tipo === 2 ? 'Artista' : u.tipo === 1 ? 'Administrador' : 'Usuario'}</td>
         <td>
           <button class="btn btn-sm btn-outline-primary me-2" data-action="ver" data-id="${u.id}">Ver</button>
+          <button class="btn btn-sm btn-outline-danger" data-action="borrar" data-id="${u.id}">Borrar</button>
         </td>
       </tr>
     `).join('')
 
     this.$tbody.querySelectorAll('button[data-action="ver"]').forEach(btn => {
       btn.addEventListener('click', () => this.emit('verUsuario', btn.getAttribute('data-id')))
+    })
+    this.$tbody.querySelectorAll('button[data-action="borrar"]').forEach(btn => {
+      btn.addEventListener('click', () => this.emit('borrarUsuario', btn.getAttribute('data-id')))
     })
   }
 }

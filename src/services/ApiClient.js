@@ -222,4 +222,9 @@ export default {
     return http(USUARIOS_BASE, url, withAuth())
   },
 
+  async deleteUsuario(id) {
+    if (!id) throw new Error('ID de usuario requerido')
+    return http(USUARIOS_BASE, `/usuarios/${id}`, withAuth({ method: 'DELETE' }))
+  },
+
 }
