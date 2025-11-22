@@ -113,6 +113,29 @@
   height: 3rem;
 }
 
+/* Estilos para la vista de detalle del álbum */
+.album-detail-view .card-img-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.album-detail-view .placeholder-image {
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.album-detail-view .song-item {
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.album-detail-view .song-item:hover {
+  background-color: #f8f9fa;
+}
+
+.album-detail-view .play-btn {
+  transition: all 0.2s ease;
+}
+
 /* Imagenes que deben cubrir su contenedor (utilizado en MerchView) */
 .object-fit-cover {
   width: 100% !important;
