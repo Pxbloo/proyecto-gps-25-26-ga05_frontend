@@ -333,7 +333,7 @@ class Router {
             '/explorar/vinilo': () => this.mountAlbumExplorerWithFormat('2'),
             '/explorar/cd': () => this.mountAlbumExplorerWithFormat('3'),
             '/explorar/cassette': () => this.mountAlbumExplorerWithFormat('4'),
-		    '/album/:id': (params) => mountAlbumDetail(params.id)
+		    '/album/:id': (params) => mountAlbumDetail(params.id),
 			'/historialCompras': () => mountHistorialCompras()
 		}
 		this.init()
