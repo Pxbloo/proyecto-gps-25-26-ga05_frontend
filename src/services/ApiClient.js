@@ -195,9 +195,23 @@ export default {
     return res?.album || null
   },
 
+  async getMerchs() {
+    // Lista todos los productos de merchandising
+    const res = await http(CONTENIDO_BASE, '/merch')
+    return res?.merch || res
+  },
+
   async getMerch(id) {
     const res = await http(CONTENIDO_BASE, `/merch/${id}`, withAuth())
     return res?.merch || null
+  },
+
+  async disminuirStockMerch(id, cantidad = 1) {
+    return http(CONTENIDO_BASE, `/merch/${id}/disminuirStockMerch`, withAuth({
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cantidad })
+    }))
   },
 	
   // Función auxiliar para convertir File a ArrayBuffer (bytes)
@@ -241,6 +255,13 @@ export default {
   
   getCancionAudioUrl(cancionId) {
     return `${CONTENIDO_BASE}/canciones/${cancionId}/archivo`
-  }
+  },
 
+  async comprarMerch(payload) {
+  return http(CONTENIDO_BASE, '/pedido/pago', withAuth({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }))
+}
 }
