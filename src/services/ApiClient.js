@@ -195,9 +195,23 @@ export default {
     return res?.album || null
   },
 
+  async getMerchs() {
+    // Lista todos los productos de merchandising
+    const res = await http(CONTENIDO_BASE, '/merch')
+    return res?.merch || res
+  },
+
   async getMerch(id) {
     const res = await http(CONTENIDO_BASE, `/merch/${id}`, withAuth())
     return res?.merch || null
+  },
+
+  async disminuirStockMerch(id, cantidad = 1) {
+    return http(CONTENIDO_BASE, `/merch/${id}/disminuirStockMerch`, withAuth({
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cantidad })
+    }))
   },
 	
   // Función auxiliar para convertir File a ArrayBuffer (bytes)
@@ -241,6 +255,49 @@ export default {
   
   getCancionAudioUrl(cancionId) {
     return `${CONTENIDO_BASE}/canciones/${cancionId}/archivo`
-  }
+  },
 
+  async comprarMerch(payload) {
+  return http(CONTENIDO_BASE, '/pedido/pago', withAuth({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }))
+  },
+
+  async addAlbumFavorito(idUsuario, idAlbum) {
+  return http(USUARIOS_BASE,`/usuarios/${idUsuario}/favoritos/albums/${idAlbum}`, withAuth({ method: 'POST' }))
+  },
+
+  async removeAlbumFavorito(idUsuario, idAlbum) {
+  return http(USUARIOS_BASE,`/usuarios/${idUsuario}/favoritos/albums/${idAlbum}`,withAuth({ method: 'DELETE' }))
+  },
+
+  async getFavoritosAlbum(idUsuario) {
+  return http(USUARIOS_BASE,`/usuarios/${idUsuario}/favoritos/albums`, withAuth({ method: 'GET' })) 
+  },
+
+  async addCancionFavorito(idUsuario, idCancion) {
+    return http(USUARIOS_BASE, `/usuarios/${idUsuario}/favoritos/canciones/${idCancion}`, withAuth({ method: 'POST' }))
+  },
+
+  async removeCancionFavorito(idUsuario, idCancion) {
+    return http(USUARIOS_BASE, `/usuarios/${idUsuario}/favoritos/canciones/${idCancion}`, withAuth({ method: 'DELETE' }))
+  },
+
+  async getFavoritosCanciones(idUsuario) {
+    return http(USUARIOS_BASE, `/usuarios/${idUsuario}/favoritos/canciones`, withAuth({ method: 'GET' }))
+  },
+
+  async addArtistaFavorito(idUsuario, idArtista) {
+    return http(USUARIOS_BASE, `/usuarios/${idUsuario}/favoritos/artistas/${idArtista}`, withAuth({ method: 'POST' }))
+  },
+
+  async removeArtistaFavorito(idUsuario, idArtista) {
+    return http(USUARIOS_BASE, `/usuarios/${idUsuario}/favoritos/artistas/${idArtista}`, withAuth({ method: 'DELETE' }))
+  },
+
+  async getFavoritosArtistas(idUsuario) {
+    return http(USUARIOS_BASE, `/usuarios/${idUsuario}/favoritos/artistas`, withAuth({ method: 'GET' }))
+  }
 }

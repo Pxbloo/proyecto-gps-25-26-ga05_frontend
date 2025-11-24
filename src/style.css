@@ -135,3 +135,17 @@
 .album-detail-view .play-btn {
   transition: all 0.2s ease;
 }
+
+/* Imagenes que deben cubrir su contenedor (utilizado en MerchView) */
+.object-fit-cover {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  display: block;
+}
+
+/* Asegurar que el contenedor ratio no muestre overflow inesperado */
+.merch-card .ratio {
+  overflow: hidden;
+}
