@@ -374,6 +374,26 @@ const mountAlbumDetail = (albumId) => {
   const controller = new AlbumDetailController(model, view, albumId)
 }
 
+const mountFavorites = async () => {
+  const root = document.getElementById('app')
+  if (!root) return
+
+  const user = JSON.parse(localStorage.getItem('authUser') || 'null')
+  if (!user?.id) {
+    router.navigate('/login')
+    return
+  }
+
+  root.innerHTML = ''
+  const { default: FavoriteModel } = await import('./models/FavoriteModel.js')
+  const { default: FavoriteView } = await import('./views/FavoriteView.js')
+  const { default: FavoriteController } = await import('./controllers/FavoriteController.js')
+
+  const model = new FavoriteModel()
+  const view = new FavoriteView(root)
+  new FavoriteController(model, view, user.id)
+}
+
 // Router simple
 class Router {
 	constructor() {
@@ -394,7 +414,8 @@ class Router {
 		    '/album/:id': (params) => mountAlbumDetail(params.id),
 			'/historialCompras': () => mountHistorialCompras(),
 			'/merch/:id': () => mountMerchDetail(), 
-			'/merch': mountMerch
+			'/merch': mountMerch,
+			'/favorites': mountFavorites
 		}
 		this.init()
 	}
@@ -524,6 +545,7 @@ const renderAuthArea = () => {
 					<li><h6 class="dropdown-header">${user.correo || ''}</h6></li>
 					<li><a class="dropdown-item" href="#" id="nav-profile">Perfil</a></li>
 					<li><a class="dropdown-item" href="/historialCompras" data-link id="nav-purchase-history">Historial de compras</a></li>
+					<li><a class="dropdown-item" href="/favorites" data-link id="nav-favorites">Favoritos</a></li>
 					<li><hr class="dropdown-divider"></li>
 					<li><a class="dropdown-item text-danger" href="#" id="nav-logout">Cerrar sesión</a></li>
 				</ul>

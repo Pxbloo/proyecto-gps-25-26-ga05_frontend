@@ -36,9 +36,14 @@ export default class AlbumDetailController extends EventEmitter {
       await this._toggleFavoritoArtista(artistaId)
     })
 
+    this.view.on('pagar', async (tarjeta) => {
+      await this._pagarAlbum(tarjeta)
+    })
+
 	this.view.on('shareAlbum', () => {
 	  this.compartirAlbum()
 	})
+
 
     this._inicializar()
   }
@@ -51,7 +56,7 @@ export default class AlbumDetailController extends EventEmitter {
       await this.model.cargarFavoritos(user.id)
     } catch (error) {
       console.error("Error al inicializar AlbumDetailController:", error)
-      this.view.showError && this.view.showError("No se pudo cargar el álbum")
+      this.view.showError("No se pudo cargar el álbum")
     }
   }
 
@@ -88,7 +93,7 @@ export default class AlbumDetailController extends EventEmitter {
       }
     } catch (error) {
       console.error(error)
-      this.view.showError && this.view.showError("Error gestionando favoritos de canción")
+      this.view.showError("Error gestionando favoritos de canción")
     }
   }
 
@@ -107,28 +112,39 @@ export default class AlbumDetailController extends EventEmitter {
       }
     } catch (error) {
       console.error(error)
-      this.view.showError && this.view.showError("Error gestionando favoritos del artista")
+      this.view.showError("Error gestionando favoritos del artista")
     }
   }
 
-  compartirAlbum() {
-	if (!this.model.state.album) return
+  async _pagarAlbum(tarjeta) {
+    try {
+      const user = JSON.parse(localStorage.getItem('authUser') || 'null')
+      if (!user?.id) throw new Error("Debes iniciar sesión")
 
-	const album = this.model.state.album
-	const shareData = {
-		title: album.nombre,
-		text: `Mira el álbum "${album.nombre}" de ${album.nombreArtista}`,
-		url: window.location.href
-	}
+      const { numero, cvv, expiracion } = tarjeta?.tarjeta || {}
+      if (!numero || !cvv || !expiracion) throw new Error("Todos los campos de la tarjeta son obligatorios")
 
-	if (navigator.share) {
-		navigator.share(shareData).catch(console.error)
-	} else {
-		// Fallback: copiar al portapapeles
-		navigator.clipboard.writeText(window.location.href).then(() => {
-		alert('Enlace copiado al portapapeles')
-		}).catch(console.error)
-	}
+      const payload = {
+        cliente_id: Number(user.id),
+        producto: {
+          id: Number(this.albumId),
+          tipo: 'digital',
+          cantidad: 1
+        },
+        pago: {
+          tipo: 'tarjeta',
+          numero: numero.trim(),
+          cvv: cvv.trim(),
+          expiracion: expiracion.trim()
+        }
+      }
+
+      const res = await ApiClient.comprarMerch(payload)
+      this.view.showMessage(res?.mensaje || 'Compra realizada con éxito!')
+    } catch (err) {
+      console.error(err)
+      this.view.showError(err.message || 'Error en el pago')
+    }
   }
 
   destroy() {
