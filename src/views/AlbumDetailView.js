@@ -49,13 +49,26 @@ export default class AlbumDetailView extends EventEmitter {
                   <h2 id="album-title" class="h4 fw-bold mb-2"></h2>
                   <p id="album-artist" class="text-muted mb-3"></p>
                   <div class="d-grid gap-2">
-                    <button class="btn btn-primary btn-lg">
+                    <button id="btn-comprar" class="btn btn-primary btn-lg">
                       <i class="bi bi-cart me-2"></i>Comprar - $<span id="album-price"></span>
                     </button>
-					<button class="btn btn-outline-primary" id="share-album-btn">
-						<i class="bi bi-share me-1"></i>Compartir álbum
-					</button>
+                    <button class="btn btn-outline-primary" id="share-album-btn">
+                      <i class="bi bi-share me-1"></i>Compartir álbum
+                    </button>
                   </div>
+
+                  <div id="payment-form" class="card p-3 mt-3 d-none">
+                    <h5 class="mb-3">Datos de pago</h5>
+                    <label class="form-label">Número de tarjeta</label>
+                    <input id="input-numero" type="text" maxlength="16" class="form-control mb-3">
+                    <label class="form-label">CVV</label>
+                    <input id="input-cvv" type="text" maxlength="3" class="form-control mb-3">
+                    <label class="form-label">Fecha expiración (MM/AA)</label>
+                    <input id="input-exp" type="text" placeholder="12/26" class="form-control mb-3">
+                    <button id="btn-pagar" class="btn btn-success w-100">Pagar</button>
+                  </div>
+
+                  <div id="message-area" class="mt-3"></div>
                 </div>
               </div>
             </div>
@@ -112,7 +125,15 @@ export default class AlbumDetailView extends EventEmitter {
     this.$songsList = this.root.querySelector('#songs-list')
     this.$audioPlayer = this.root.querySelector('#audio-player')
 
-    this.root.querySelector('#retry-btn').addEventListener('click', () => {
+    this.$btnComprar = this.root.querySelector('#btn-comprar')
+    this.$paymentForm = this.root.querySelector('#payment-form')
+    this.$btnPagar = this.root.querySelector('#btn-pagar')
+    this.$numero = this.root.querySelector('#input-numero')
+    this.$cvv = this.root.querySelector('#input-cvv')
+    this.$exp = this.root.querySelector('#input-exp')
+    this.$message = this.root.querySelector('#message-area')
+
+    this.root.querySelector('#retry-btn')?.addEventListener('click', () => {
       this.emit('reintentar')
     })
 
@@ -120,6 +141,23 @@ export default class AlbumDetailView extends EventEmitter {
       this.emit('shareAlbum')
     })
 
+    if (this.$btnComprar) {
+      this.$btnComprar.addEventListener('click', () => {
+        this.$paymentForm?.classList.toggle('d-none')
+      })
+    }
+
+    if (this.$btnPagar) {
+      this.$btnPagar.addEventListener('click', () => {
+        this.emit('pagar', {
+          tarjeta: {
+            numero: this.$numero?.value.trim(),
+            cvv: this.$cvv?.value.trim(),
+            expiracion: this.$exp?.value.trim()
+          }
+        })
+      })
+    }
   }
 
   render(state) {
@@ -176,13 +214,11 @@ export default class AlbumDetailView extends EventEmitter {
     img.style.height = '300px'
     img.style.objectFit = 'cover'
     img.style.borderRadius = '0.375rem 0.375rem 0 0'
-    img.onerror = () => {
-      img.style.display = 'none'
-    }
+    img.onerror = () => { img.style.display = 'none' }
     $imageContainer.appendChild(img)
 
     this._renderCanciones(album.canciones)
-	this.currentAlbum = album
+    this.currentAlbum = album
   }
 
   _renderCanciones(canciones) {
@@ -258,22 +294,12 @@ export default class AlbumDetailView extends EventEmitter {
     })
   }
 
-  shareAlbum() {
-    if (!this.currentAlbum) return
-  
-    const shareData = {
-      title: this.currentAlbum.nombre,
-      text: `Mira el álbum "${this.currentAlbum.nombre}" de ${this.currentAlbum.nombreArtista}`,
-      url: window.location.href
-    }
+  showMessage(text, type = 'success') {
+    this.$message.innerHTML = `<div class="alert alert-${type}" role="alert">${text}</div>`
+    setTimeout(() => { this.$message.innerHTML = '' }, 3500)
+  }
 
-    if (navigator.share) {
-      navigator.share(shareData).catch(console.error)
-    } else {
-      // Fallback: copiar al portapapeles
-      navigator.clipboard.writeText(window.location.href).then(() => {
-        alert('Enlace copiado al portapapeles')
-      }).catch(console.error)
-    }
+  showError(text) {
+    this.showMessage(text, 'danger')
   }
 }

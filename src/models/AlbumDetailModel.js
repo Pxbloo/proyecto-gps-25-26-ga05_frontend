@@ -23,13 +23,12 @@ export default class AlbumDetailModel extends EventEmitter {
       this.emit('change', this.getState())
 
       const album = await ApiClient.getAlbumDetalle(albumId)
-      
+
       this.state = {
         ...this.state,
-        album: album,
+        album,
         loading: false
       }
-      
       this.emit('change', this.getState())
     } catch (error) {
       console.error('Error al consultar el álbum:', error)
@@ -55,7 +54,6 @@ export default class AlbumDetailModel extends EventEmitter {
 
   async cargarFavoritos(userId) {
     try {
-      // Cargar favoritos de canciones
       const favCancionesResp = await ApiClient.getFavoritosCanciones(userId)
       const favCancionesIds = Array.isArray(favCancionesResp?.favoritos)
         ? favCancionesResp.favoritos.map(f => Number(f.idCancion))
@@ -70,7 +68,6 @@ export default class AlbumDetailModel extends EventEmitter {
         }))
       }
 
-      // Cargar favoritos de artistas
       const favArtistasResp = await ApiClient.getFavoritosArtistas(userId)
       const favArtistasIds = Array.isArray(favArtistasResp?.favoritos)
         ? favArtistasResp.favoritos.map(f => Number(f.idArtista))
@@ -84,7 +81,6 @@ export default class AlbumDetailModel extends EventEmitter {
       console.error('Error al cargar favoritos:', error)
     }
   }
-
 
   marcarFavoritoCancion(cancionId, valor) {
     if (!this.state.album?.canciones) return
