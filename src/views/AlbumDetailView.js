@@ -302,4 +302,24 @@ export default class AlbumDetailView extends EventEmitter {
   showError(text) {
     this.showMessage(text, 'danger')
   }
+
+  compartirAlbum() {
+  const album = this.model.state.album
+  if (!album) return
+
+  const shareData = {
+    title: album.nombre,
+    text: `Mira el álbum "${album.nombre}" de ${album.nombreArtista}`,
+    url: window.location.href
+  }
+
+    if (navigator.share) {
+      navigator.share(shareData).catch(console.error)
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => alert('Enlace copiado al portapapeles'))
+        .catch(console.error)
+    }
+  }
+
 }

@@ -40,10 +40,9 @@ export default class AlbumDetailController extends EventEmitter {
       await this._pagarAlbum(tarjeta)
     })
 
-	this.view.on('shareAlbum', () => {
-	  this.compartirAlbum()
-	})
-
+    this.view.on('shareAlbum', () => {
+      this.compartirAlbum()
+    })
 
     this._inicializar()
   }
@@ -146,6 +145,28 @@ export default class AlbumDetailController extends EventEmitter {
       this.view.showError(err.message || 'Error en el pago')
     }
   }
+
+  compartirAlbum() {
+      if (!this.model.state.album) return;
+
+      const album = this.model.state.album;
+      const shareData = {
+          title: album.nombre,
+          text: `Mira el álbum "${album.nombre}" de ${album.nombreArtista}`,
+          url: window.location.href
+      };
+
+      if (navigator.share) {
+          navigator.share(shareData).catch(console.error);
+      } else {
+          navigator.clipboard.writeText(window.location.href)
+              .then(() => {
+                  alert('Enlace copiado al portapapeles');
+              })
+              .catch(console.error);
+      }
+  }
+
 
   destroy() {
     this.view.pausarCancion()
