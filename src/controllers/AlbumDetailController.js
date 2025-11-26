@@ -39,6 +39,10 @@ export default class AlbumDetailController extends EventEmitter {
       await this._toggleFavoritoArtista(artistaId)
     })
 
+    this.view.on('pagar', async (tarjeta) => {
+      await this._pagarAlbum(tarjeta)
+    })
+
     this.view.on('shareAlbum', () => {
       this.compartirAlbum()
     })
