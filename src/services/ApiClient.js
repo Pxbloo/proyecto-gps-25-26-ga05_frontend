@@ -254,6 +254,16 @@ export default {
     if (!id) throw new Error('ID de usuario requerido')
     return http(USUARIOS_BASE, `/usuarios/${id}`, withAuth({ method: 'DELETE' }))
   },
+
+  async updateUsuario(id, payload) {
+    if (!id) throw new Error('ID de usuario requerido')
+    // El microservicio acepta PATCH /usuarios/:idUsuario con JSON
+    return http(USUARIOS_BASE, `/usuarios/${id}`, withAuth({
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }))
+  },
   
   async getAlbumDetalle(albumId) {
 	return http(CONTENIDO_BASE, `/albums/${albumId}/detalle`)
