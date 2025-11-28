@@ -128,17 +128,47 @@ export default class ArtistaController {
       }
     }
     
-    // TODO: Aquí se haría la petición PUT al backend para actualizar el usuario
-    // await ApiClient.updateUsuario(this.userId, this.usuario)
-    
-    console.log('Guardando perfil:', profileData)
-    
-    // Cerrar modo edición y re-renderizar
-    this.editMode = false
-    this.view.setEditMode(false)
-    this.view.render(this.usuario, this.isArtist, this.visibilitySettings)
-    
-    alert('Perfil actualizado correctamente (cambios locales)')
+    // Construir payload con sólo los campos provistos
+    const payload = {}
+    if (profileData.nombre !== undefined) payload.nombre = profileData.nombre
+    if (profileData.correo !== undefined) payload.correo = profileData.correo
+    if (profileData.contrasena !== undefined && profileData.contrasena !== '') payload.contrasena = profileData.contrasena
+    if (profileData.direccion !== undefined) payload.direccion = profileData.direccion
+    if (profileData.telefono !== undefined) payload.telefono = profileData.telefono
+    if (profileData.descripcion !== undefined) payload.descripcion = profileData.descripcion
+    if (profileData.urlImagen !== undefined) payload.urlImagen = profileData.urlImagen
+
+    console.log('Enviando actualización al backend:', payload)
+
+    try {
+      const ApiClient = (await import('../services/ApiClient.js')).default
+      // Llamada PATCH al microservicio de usuarios
+      await ApiClient.updateUsuario(this.userId, payload)
+
+      // Actualizar datos locales tras éxito
+      Object.assign(this.usuario, payload)
+
+      // Si el usuario editado es el propio autenticado, actualizar también el localStorage
+      try {
+        if (this.isOwner && this.currentUser && Number(this.currentUser.id) === Number(this.userId)) {
+          const updated = Object.assign({}, this.currentUser, payload)
+          localStorage.setItem('authUser', JSON.stringify(updated))
+          this.currentUser = updated
+        }
+      } catch (e) {
+        console.warn('No se pudo actualizar authUser en localStorage:', e)
+      }
+
+      // Si hay configuración de visibilidad (solo artistas), ya se guardó antes
+      this.editMode = false
+      this.view.setEditMode(false)
+      this.view.render(this.usuario, this.isArtist, this.visibilitySettings)
+
+      alert('Perfil actualizado correctamente')
+    } catch (err) {
+      console.error('Error actualizando perfil:', err)
+      alert('Error al actualizar el perfil: ' + (err.message || err))
+    }
   }
 
   toggleFollow() {
