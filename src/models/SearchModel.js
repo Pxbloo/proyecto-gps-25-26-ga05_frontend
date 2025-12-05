@@ -154,8 +154,8 @@ export default class SearchModel extends EventEmitter {
         results.push({
           id: album.id,
           type: 'album',
-          name: album.titulo,
-          artist: album.nombreArtista || album.artista || '',
+          name: album.titulo || album.nombre || 'Álbum sin título',
+          artist: album.nombreArtista || album.artista || 'Artista desconocido',
           year: album.fechaPublicacion ? new Date(album.fechaPublicacion).getFullYear() : ''
         })
       })

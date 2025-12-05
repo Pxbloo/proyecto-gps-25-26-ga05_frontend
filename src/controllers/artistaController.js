@@ -146,12 +146,12 @@ export default class ArtistaController {
       await ApiClient.updateUsuario(this.userId, payload)
 
       // Actualizar datos locales tras éxito
-      Object.assign(this.usuario, payload)
+      this.usuario = { ...this.usuario, ...payload }
 
       // Si el usuario editado es el propio autenticado, actualizar también el localStorage
       try {
         if (this.isOwner && this.currentUser && Number(this.currentUser.id) === Number(this.userId)) {
-          const updated = Object.assign({}, this.currentUser, payload)
+          const updated = { ...this.currentUser, ...payload }
           localStorage.setItem('authUser', JSON.stringify(updated))
           this.currentUser = updated
         }

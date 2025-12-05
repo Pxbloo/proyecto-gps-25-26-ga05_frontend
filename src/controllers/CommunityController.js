@@ -9,7 +9,8 @@ function parseCurrentUser() {
     if (!raw) return null
     const json = JSON.parse(raw)
     return json
-  } catch (_) {
+  } catch (error) {
+    console.warn('Error al parsear usuario del localStorage:', error)
     return null
   }
 }

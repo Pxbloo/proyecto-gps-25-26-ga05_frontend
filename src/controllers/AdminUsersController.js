@@ -43,11 +43,11 @@ export default class AdminUsersController {
   // Navega al perfil público del usuario/artist seleccionado
   verUsuario(id) {
     // Usamos el router global si está disponible
-    if (window.router) {
-      window.router.navigate(`/usuario/${id}`)
+    if (globalThis.router) {
+      globalThis.router.navigate(`/usuario/${id}`)
     } else {
       // Alternativa: cambiar la ubicación
-      window.location.href = `/usuario/${id}`
+      globalThis.location.href = `/usuario/${id}`
     }
   }
 
@@ -62,7 +62,7 @@ export default class AdminUsersController {
       return
     }
     const usuarioObj = Array.isArray(this.model.state.usuarios) ? this.model.state.usuarios.find(u => String(u.id) === String(id)) : null
-    if (usuarioObj && usuarioObj.tipo === 1) {
+    if (usuarioObj?.tipo === 1) {
       alert('No puedes eliminar a otros administradores')
       return
     }
